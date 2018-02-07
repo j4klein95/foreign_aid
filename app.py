@@ -64,14 +64,23 @@ def sector_return():
     results = session.query(sector.year, sector.education, sector.health, sector.government, sector.economic, sector.business, sector.production, sector.multi_sector).all()
     json_list = []
     for result in results:
-        da_dict = {result[0]:{'education':result[1],
-        'health':result[2],
-        'government':result[3],
-        'economic':result[4],
-        'business':result[5],
-        'production':result[6],
-        'multi_sector':result[7]}}
-        json_list.append(da_dict)
+        json_dict = {}
+        json_dict["year"] = result[0]
+        json_dict["education"] = result[1]
+        json_dict["health"] = result[2]
+        json_dict["government"] = result[3]
+        json_dict["economic"] = result[4]
+        json_dict["business"] = result[5]
+        json_dict["multi_sector"] = result[6]
+        json_list.append(json_dict)
+#    for result in results:
+#        da_dict = {result[0]:{'education':result[1],
+#        'health':result[2],
+#        'government':result[3],
+#        'economic':result[4],
+#        'business':result[5],
+#        'multi_sector':result[7]}}
+#        json_list.append(da_dict)
     return jsonify(json_list)
 
 

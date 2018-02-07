@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Basic Foreign Aid Analysis</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+                <div class="col-md-12 jumbotron text-center">
+                    <h1>Simple Foreign Aid Analysis Dashboard</h1>
+                    <p>Use the charts featured to explore foreign aid data</p>
+                    <p>REST API results available at "/gla", "/health", and "/sector_spending"</p>
+                </div>
+        </div>
+        <div class="row">
+            <div class="col-md-2">
+                <div class="well">
+                    <h5>SELECT Year:</h5>
+                    <select id="selDataset"></select>
+                </div>
+                <div class="panel panel-primary">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Foreign Aid Spending Based on Sector</h3>
+                    </div>
+                    <div id="foreign-metadata" class="panel-body"></div>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <div id="pie"></div>
+            </div>
+            <div class="col-md-5">
+                <div id="dbl_axis"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <div id="bubble"></div>
+        </div>
+    </div>
+
+    <script>
+    //unpacking function
+    function unpack(rows, key) {
+      return rows.map(function(row) { return row[key]; });
+    }
+    //pie builder
+    function buildPie(){
+      Plotly.d3.json('/sector_spending', function(error, response){
+        if (error) return console.warn(error);
+
+        listOfYears = []
+        businessValues = []
+        economicValues = []
+        educationValues = []
+        governmentValues = []
+        healthValues = []
+        multi_sectorValues = []
+
+        for (var i = 0; i < response.length; i++ ){
+          yearValue = response[i].year;
+          listOfYears.push(yearValue);
+          businessValue = response[i].business;
+          businessValues.push(businessValue);
+          economicValue = response[i].economic;
+          economicValues.push(economicValue);
+          educationValue = response[i].education;
+          educationValues.push(educationValue);
+          governmentValue = response[i].government;
+          governmentValues.push(governmentValue);
+          healthValue = response[i].health;
+          healthValues.push(healthValue);
+          multi_sectorValue = response[i].multi_sector;
+          multi_sectorValues.push(multi_sectorValue);
+        }
+        console.log(listOfYears);
+        //select data
+        function getData(chosenYear) {
+          allData = [];
+          for (var i = 0 ; i < listOfYears.length ; i++){
+            if( listOfYears[i] == chosenYear) {
+              allData.push(businessValues[i]);
+              allData.push(economicValues[i]);
+              allData.push(educationValues[i]);
+              allData.push(governmentValues[i]);
+              allData.push(healthValues[i]);
+              allData.push(multi_sectorValues[i]);
+            }
+          }
+        };
+        //set a default
+        setPiePlot(1990);
+
+        function setPiePlot(chosenYear) {
+          getData(chosenYear);
+
+          var data = [{
+            values: allData,
+            labels: ['Business', 'Economic', 'Education', 'Government', 'Health', 'Multi-Sector'],
+            type: 'pie'
+          }];
+
+          var layout = { t:0 , l: 0 };
+
+          var pieee = document.getElementById('pie');
+
+          Plotly.plot(pieee, data, layout);
+          console.log(allData);
+        };
+        var yearSelector = document.getElementById('selDataset');
+
+        function assignOptions(textArray, selector) {
+          for (var i = 0; i < textArray.length; i++) {
+            var currentOption = document.createElement('option');
+            currentOption.text = textArray[i];
+            selector.appendChild(currentOption);
+          }
+        }
+        assignOptions(listOfYears, yearSelector);
+
+        function updateInfo() {
+          setPiePlot(yearSelector.value);
+          setPanel(yearSelector.value);
+        };
+        yearSelector.addEventListener('change', updateInfo, false
+      );
+
+      var panel = document.getElementById("foreign-metadata");
+
+
+      setPanel(1990)
+      function setPanel(year) {
+        Plotly.d3.json('sector_spending', function(error, response){
+          panel.innerHTML = "";
+          for (var i = 0; i < response.length; i ++) {
+            if (response[i].year == year) {
+              for(var key in response[i]) {
+                h6tag = document.createElement('h6');
+                h6Text = document.createTextNode(`${key}: ${response[i][key]}`);
+                h6tag.append(h6Text);
+                panel.appendChild(h6tag);
+              }
+            }
+          }
+        })
+      }
+    });
+    };
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// net aid received should be x axis, y axis should be gdp_per_capita, bubble size lit
+    function buildScatter() {
+     Plotly.d3.json('/gla', function (err, data) {
+       var trace = {
+         x: [],
+         y: [],
+         id: [],
+         text: [],
+         marker: {size:[]}
+       }
+       var years = [];
+       for (i = 0; i < data.length; i++) {
+         var datum = data[i];
+         trace.text.push(datum.country);
+         trace.id.push(datum.country);
+         trace.x.push(datum.net_aid_received);
+         trace.y.push(datum.gdp_per_capita);
+         trace.marker.size.push(datum.literacy_rate);
+         years.push(datum.year);
+       }
+       console.log(trace);
+       var firstYear = years[0];
+       var sliderSteps = [];
+       for (i = 0; i < years.length; i++) {
+         sliderSteps.push({
+           method: 'animate',
+           label: years[i],
+           args: [[years[i]], {
+             mode: 'immediate',
+             transition: {duration: 300},
+             frame: {duration: 300, redraw: false},
+           }]
+         });
+       }
+
+       var layout = {
+        xaxis: {
+          title: 'Life Expectancy',
+          range: [30, 85]
+        },
+        yaxis: {
+          title: 'GDP per Capita',
+          type: 'log'
+        },
+        hovermode: 'closest',
+	 // We'll use updatemenus (whose functionality includes menus as
+	 // well as buttons) to create a play button and a pause button.
+	 // The play button works by passing `null`, which indicates that
+	 // Plotly should animate all frames. The pause button works by
+	 // passing `[null]`, which indicates we'd like to interrupt any
+	 // currently running animations with a new list of frames. Here
+	 // The new list of frames is empty, so it halts the animation.
+        updatemenus: [{
+          x: 0,
+          y: 0,
+          yanchor: 'top',
+          xanchor: 'left',
+          showactive: false,
+          direction: 'left',
+          type: 'buttons',
+          pad: {t: 87, r: 10},
+          buttons: [{
+            method: 'animate',
+            args: [null, {
+              mode: 'immediate',
+              fromcurrent: true,
+              transition: {duration: 300},
+              frame: {duration: 500, redraw: false}
+            }],
+            label: 'Play'
+          }, {
+            method: 'animate',
+            args: [[null], {
+              mode: 'immediate',
+              transition: {duration: 0},
+              frame: {duration: 0, redraw: false}
+            }],
+            label: 'Pause'
+          }]
+        }],
+	 // Finally, add the slider and use `pad` to position it
+	 // nicely next to the buttons.
+        sliders: [{
+          pad: {l: 130, t: 55},
+          currentvalue: {
+            visible: true,
+            prefix: 'Year:',
+            xanchor: 'right',
+            font: {size: 20, color: '#666'}
+          },
+          steps: sliderSteps
+        }]
+      };
+
+  // Create the plot:
+      Plotly.plot('bubble', {
+        data: trace,
+        layout: layout,
+        frames: frames,
+      });
+    });
+  }
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    //function init(){
+      //buildPie();
+    //};
+    //init();
+
+
+
+
+    // update panel with metadata
+
+    //build pie chart
+
+
+    // write function to update pie
+
+
+
+    </script>
+
+</body>
+</html>
