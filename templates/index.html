@@ -8,6 +8,35 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://d3js.org/d3.v4.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <style>
+    .line {
+  fill: none;
+  stroke-width: 2px;
+}
+
+.orange {
+  stroke: orange;
+}
+
+.green {
+  stroke: green;
+}
+
+.purple {
+  stroke: purple;
+}
+
+.chocolate {
+  .stroke: chocolate;
+}
+.darkmagenta {
+  .stroke: darkmagenta;
+}
+
+.teal {
+  .stroke: teal;
+}
+    </style>
 </head>
 <body>
     <div class="container">
@@ -155,7 +184,7 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////
 // net aid received should be x axis, y axis should be gdp_per_capita, bubble size lit
     function buildBubble() {
-      Plotly.d3.csv('../clean_data/altered_gdp_lit_aid.csv', function (error, data) {
+      Plotly.d3.csv('https://raw.githubusercontent.com/j4klein95/foreign_aid_education_project/master/clean_data/altered_gdp_lit_aid.csv', function (error, data) {
         var lookup = {};
         function getData(year, region) {
           var byYear, trace;
@@ -178,9 +207,9 @@
           var trace = getData(datum.year, datum.region);
           trace.text.push(datum.country);
           trace.id.push(datum.country);
-          trace.x.push(datum.net_aid_received);
+          trace.x.push(datum.literacy_rate);
           trace.y.push(datum.gdp_per_capita);
-          tracer.marker.size.push(datum.literacy_rate);
+          trace.marker.size.push(datum.net_aid_received);
         }
         var years = Object.keys(lookup);
         var firstYear = lookup[years[0]];
@@ -190,7 +219,7 @@
         for (i = 0; i < regions.length; i++) {
           var data = firstYear[regions[i]];
           traces.push({
-            name: continents[i],
+            name: regions[i],
             x: data.x.slice(),
             y: data.y.slice(),
             id: data.id.slice(),
@@ -208,7 +237,7 @@
           frames.push({
             name: years[i],
             data: regions.map(function (region) {
-              return getData(years[i], continent);
+              return getData(years[i], region);
             })
           })
         }
@@ -227,7 +256,7 @@
         var layout = {
           xaxis: {
             title: 'Net Aid Received',
-            range: [0, 5000000000000]
+            range: [0, 6867050000]
           },
           yaxis: {
             title: 'GDP per Capita',
@@ -272,14 +301,166 @@
         });
       });
     };
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///////////////////////////////////////////////////////////////////////////////////
+    function pleaseWork() {
+      var svgWidth = 960;
+      var svgHeight = 500;
+      var padding = 100;
+
+      var margin = { top: 30, right: 50, bottom: 120, left: 100 };
+
+      var width = svgWidth - margin.left - margin.right;
+      var height = svgHeight - margin.top - margin.bottom;
+
+      var svg = d3
+        .select('body')
+        .append("svg")
+        .attr("width", svgWidth)
+        .attr("height", svgHeight)
+        .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      d3.csv("https://raw.githubusercontent.com/j4klein95/foreign_aid_education_project/master/clean_data/life_clean.csv", function(error, data) {
+        if (error) throw error;
+        console.log(data);
+        console.log([data]);
+        var parseTime = d3.timeParse("%Y");
+
+        data.forEach(function(data) {
+          data.year = parseTime(data.year);
+          data.health_aid_received = +data.health
+          data.ida_only_life_expectancy = +data.ida_only;
+          data.low_middle_income_life_expectancy = +data.low_middle_income;
+          data.lower_middle_income_life_expectancy = +data.lower_middle_income;
+        });
+
+        var xTimeScale = d3.scaleTime().range([0, width]);
+        var yLinearScale = d3.scaleLinear().range([height, 0]);
+        var yLinearScale2 = d3.scaleLinear().range([height, 0]);
+
+        var bottomAxis = d3.axisBottom(xTimeScale);
+        var leftAxis = d3.axisLeft(yLinearScale);
+        var rightAxis = d3.axisRight(yLinearScale2);
+
+        xTimeScale.domain(d3.extent(data, function(data){
+          return data.year;
+        })
+      );
+        yLinearScale.domain([
+          0,
+          d3.max(data, function(data){
+            return data.health_aid_received;
+          })
+        ]);
+        yLinearScale2.domain([
+          0, 100
+        ]);
+        ///////Line Generators
+        var aid_received_line = d3
+          .line()
+          .x(function(data) {
+            return xTimeScale(data.year);
+          })
+          .y(function(data) {
+            return yLinearScale(data.health_aid_received);
+          });
+
+        var ida_only_line = d3
+        .line()
+        .x(function(data) {
+          return xTimeScale(data.year);
+        })
+        .y(function(data) {
+          return yLinearScale2(data.ida_only_life_expectancy);
+        });
+
+        var lower_middle_income_line = d3
+        .line()
+        .x(function(data){
+          return xTimeScale(data.year);
+        })
+        .y(function(data) {
+          return yLinearScale2(data.lower_middle_income_life_expectancy);
+        });
+
+        var low_middle_income_line = d3
+        .line()
+        .x(function(data){
+          return xTimeScale(data.year);
+        })
+        .y(function(data){
+          return yLinearScale2(data.low_middle_income_life_expectancy);
+        });
+
+        svg.append("path").data([data]).attr('d', aid_received_line).attr("class", "line green");
+        svg.append("path").data([data]).attr('d', ida_only_line).attr("class", "line orange");
+        svg.append("path").data([data]).attr('d', lower_middle_income_line).attr("class", "line purple");
+        svg.append("path").data([data]).attr('d', low_middle_income_line).attr("class", "line teal");
+        svg.append("g").attr("transform", "translate(0," + height + ")").call(bottomAxis);
+        svg.append("g").call(leftAxis);
+        svg.append("g").attr("transform", "translate(" + width + ",0)").call(rightAxis);
+        svg
+          .append("text")
+          .attr(
+            "transform",
+            "translate(" + width / 2 + "," + (height + margin.top + 35) + ")")
+          .attr("text-anchor", "middle")
+          .attr("font-size", "16px")
+          .attr("fill", "orange")
+          .text("International Development Association Countries Only");
+
+          svg
+            .append("text")
+            .attr(
+              "transform",
+              "translate(" + width / 2 + "," + (height + margin.top + 10) + ")"
+            )
+            .attr("text-anchor", "middle")
+            .attr("font-size", "16px")
+            .attr("fill", "green")
+            .text("Net Health Aid Received");
+
+            svg
+              .append("text")
+              .attr(
+                "transform",
+                "translate(" + width / 2 + "," + (height + margin.top + 60) + ")"
+              )
+              .attr("text-anchor", "middle")
+              .attr("font-size", "16px")
+              .attr("fill", "purple")
+              .text("Lower Middle Income Countries");
+
+            svg
+              .append("text")
+              .attr(
+                "transform",
+                "translate(" + (margin.left/4) + "," + (height/4)+")rotate(-90)"
+              )
+              .attr("font-size", "10px")
+              .attr("fill", "black")
+              .text("$ in current US (millions)");
+
+              svg
+                .append("text")
+                .attr(
+                  "transform",
+                  "translate(" + (840) + "," + (height/14)+")rotate(90)"
+                )
+                .attr("font-size", "10px")
+                .attr("fill", "black")
+                .text("Life Expectancy");
+      });
+    };
     //function init(){
       //buildPie();
     //};
     //init();
+    pleaseWork();
+    buildPie();
+    buildBubble();
 
 
 
