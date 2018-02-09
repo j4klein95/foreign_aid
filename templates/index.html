@@ -27,14 +27,14 @@
 }
 
 .chocolate {
-  .stroke: chocolate;
+  stroke: chocolate;
 }
 .darkmagenta {
-  .stroke: darkmagenta;
+  stroke: darkmagenta;
 }
 
 .teal {
-  .stroke: teal;
+  stroke: teal;
 }
     </style>
 </head>
@@ -228,7 +228,7 @@
             marker: {
               size: data.marker.size.slice(),
               sizemode: 'area',
-              sizeref: 200000
+              sizeref: 2000000
             }
           });
         }
@@ -255,12 +255,12 @@
 
         var layout = {
           xaxis: {
-            title: 'Net Aid Received',
-            range: [0, 6867050000]
+            title: 'Literacy Rate',
+            range: [0, 100]
           },
           yaxis: {
             title: 'GDP per Capita',
-            type: 'log'
+            range: [0, 4000]
           },
           hovermode: 'closest',
           updatemenus: [{
@@ -409,7 +409,7 @@
           .attr("text-anchor", "middle")
           .attr("font-size", "16px")
           .attr("fill", "orange")
-          .text("International Development Association Countries Only");
+          .text("International Development Association Countries Only (World Bank Classification)");
 
           svg
             .append("text")
@@ -431,7 +431,18 @@
               .attr("text-anchor", "middle")
               .attr("font-size", "16px")
               .attr("fill", "purple")
-              .text("Lower Middle Income Countries");
+              .text("Lower Middle Income Countries (GNI per capita $1,026 - $4,036)");
+
+              svg
+                .append("text")
+                .attr(
+                  "transform",
+                  "translate(" + width / 2 + "," + (height + margin.top + 85) + ")"
+                )
+                .attr("text-anchor", "middle")
+                .attr("font-size", "16px")
+                .attr("fill", "teal")
+                .text("Low Middle Income Countries (GNI per capita $4,036 - $12,475)");
 
             svg
               .append("text")
