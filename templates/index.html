@@ -45,13 +45,24 @@
                     <h1>Simple Foreign Aid Analysis Dashboard</h1>
                     <p>Use the charts featured to explore foreign aid data</p>
                     <p>REST API results available at "/gla", "/health", and "/sector_spending"</p>
+                    <p><small>Sector spending data is from the Organization for Economic Cooperation and Development,
+                      Literacy rates, GDP per Capita, and aid received data is courtesy of the World Bank Databank
+                    </small></p>
+                      <p><small>
+                        In 2016, an estimated $140 billion was spent on projects that fall under the umbrella of foreign aid.
+                      Due to this large sum of money, it is prudent for analysts to evaluate the effectiveness of this large expenditure.
+                    This dashboard is designed to explore data on foreign aid by assessing how much each aid sector receives and how this aid might effect these sectors
+                  over time.</small></p>
                 </div>
         </div>
         <div class="row">
             <div class="col-md-2">
                 <div class="well">
                     <h5>SELECT Year:</h5>
-                    <select id="selDataset"></select>
+                    <select id="selDataset">
+                      <option selected="selected">
+                        2016
+                    </select>
                 </div>
                 <div class="panel panel-primary">
                     <div class="panel-heading">
@@ -64,15 +75,47 @@
                 <div id="pie"></div>
             </div>
             <div class="col-md-5">
-                <div id="dbl_axis"></div>
+                <div class="container">
+                  <div class="col-md-5 jumbotron text-center">
+                <p><small>
+                  The pie chart on the left displays foreign aid spending based on sector and can be viewed by year from 1990 to 2016. For example, if aid is given to a country for the purpose of fighting diseases then
+                  this would be recorded under health section of the pie chart. Currently, the pie chart default is set on 2016 where economic, government, education, and health sectors are shown to receive the most foreign aid.
+                  For this dashboard, emphasis is placed on economic, education, and health sectors in the following plots.
+                </small></p>
+                <p><small>
+                  Below is a bubble plot that visualizes three variables: GDP per capita, literacy rates, and net aid received. The idea, is to look for links between the amount of aid a country receives (bubble size) and its welfare in the form
+                  of GDP per capita (y-axis) and literacy rate (x-axis) over a period of 15 years. Only countries that were classified under the UN's least developed countries grouping were used.
+                </small></p>
+                </div>
             </div>
         </div>
     </div>
     <div class="row">
         <div class="col-md-12">
             <div id="bubble"></div>
+
         </div>
     </div>
+    <div class="container">
+        <div class="row">
+                <div class="col-md-12 jumbotron text-center">
+                  <p><small>The first noticeable part of this visualization is that large portion of countries have a 0% literacy rate before 2002. This can
+                  be explained through several factors. Some countries, like South Sudan, gained full independence in the latter century. Others, were home to conflicts
+                that made it difficult to properly obtain data. Another factor is the actual collection of data was not done on a by year basis. For the sake of the plot,
+              the recorded literacy rates where held until a new value was recorded (ie. if a country had a 43% rate that was held until a new rate was recorded).
+            </small></p>
+              <p><small>
+                The takeaway from this plot should be that the net amount of aid received has a rather modest effect on GDP per capita and a varying effect on literacy rate.
+                GDP per capita generally appears to rise as time progresses and the bubbles grow with some exceptions and variance. Literacy rate over time is interesting because, in general,
+                most countries receive increasing rates until 2002, where there after their rates move back and forth as the bubbles grow larger and GDP per capita rises. More research and analysis should
+                be done on this issue specifically.
+              </small></p>
+              <p><small>
+                The final plot below is a simple double axis line plot that compares foreign aid spent on health with the life expectancy of low income country aggregators over a 15 year time period.
+                The linearity of the lines indicating the country aggregators display a rather moderate rise in life expectancy as spending on health related foreign aid increases.
+              </small></p>
+                </div>
+        </div>
 
     <script>
     //unpacking function
@@ -124,7 +167,7 @@
           }
         };
         //set a default
-        setPiePlot(1990);
+        setPiePlot(2016);
 
         function setPiePlot(chosenYear) {
           getData(chosenYear);
@@ -163,7 +206,7 @@
       var panel = document.getElementById("foreign-metadata");
 
 
-      setPanel(1990)
+      setPanel(2016)
       function setPanel(year) {
         Plotly.d3.json('sector_spending', function(error, response){
           panel.innerHTML = "";
@@ -262,6 +305,9 @@
             title: 'GDP per Capita',
             range: [0, 4000]
           },
+          autosize: false,
+          width: 1300,
+          height: 500,
           hovermode: 'closest',
           updatemenus: [{
             x: 0,
@@ -281,10 +327,18 @@
                 frame: {duration: 500, redraw: false}
               }],
               label: 'Play'
+            }, {
+              method: 'animate',
+              args: [[null], {
+                mode: 'immediate',
+                transition: {duration: 0},
+                frame: {duration: 0, redraw: false}
+              }],
+              label: 'Pause'
             }]
           }],
           sliders: [{
-            pad: {l:130, t:55},
+            pad: {l:130, t:60},
             currentvalue: {
               visible: true,
               prefix: 'Year:',
@@ -305,11 +359,11 @@
 
 ///////////////////////////////////////////////////////////////////////////////////
     function pleaseWork() {
-      var svgWidth = 960;
-      var svgHeight = 500;
+      var svgWidth = 1300;
+      var svgHeight = 700;
       var padding = 100;
 
-      var margin = { top: 30, right: 50, bottom: 120, left: 100 };
+      var margin = { top: 30, right: 50, bottom: 120, left: 300 };
 
       var width = svgWidth - margin.left - margin.right;
       var height = svgHeight - margin.top - margin.bottom;
@@ -420,7 +474,7 @@
             .attr("text-anchor", "middle")
             .attr("font-size", "16px")
             .attr("fill", "green")
-            .text("Net Health Aid Received");
+            .text("Aid spent on health sector");
 
             svg
               .append("text")
@@ -448,7 +502,7 @@
               .append("text")
               .attr(
                 "transform",
-                "translate(" + (margin.left/4) + "," + (height/4)+")rotate(-90)"
+                "translate(" + (margin.left-275) + "," + (height/4)+")rotate(-90)"
               )
               .attr("font-size", "10px")
               .attr("fill", "black")
@@ -458,7 +512,7 @@
                 .append("text")
                 .attr(
                   "transform",
-                  "translate(" + (840) + "," + (height/14)+")rotate(90)"
+                  "translate(" + (980) + "," + (height/14)+")rotate(90)"
                 )
                 .attr("font-size", "10px")
                 .attr("fill", "black")
